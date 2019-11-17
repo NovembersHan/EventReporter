@@ -5,11 +5,22 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -17,6 +28,12 @@ import android.widget.ImageView;
  */
 public class EventsFragment extends Fragment {
     private ImageView mImageViewAdd;
+
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+    private DatabaseReference database;
+    private List<Event> events;
 
     public EventsFragment() {
         // Required empty public constructor
@@ -37,7 +54,36 @@ public class EventsFragment extends Fragment {
                 startActivity(eventReportIntent);
             }
         });
+
+        recyclerView = (RecyclerView) view.findViewById(R.id.event_recycler_view);
+        database = FirebaseDatabase.getInstance().getReference();
+        recyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(mLayoutManager);
+        setAdapter();
         return view;
+    }
+
+    /**
+     * Set adapter for recycler view to show all events
+     */
+    public void setAdapter() {
+        events = new ArrayList<Event>();
+        database.child("events").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot noteDataSnapshot : dataSnapshot.getChildren()) {
+                    Event event = noteDataSnapshot.getValue(Event.class);
+                }
+                mAdapter = new EventListAdapter(events);
+                recyclerView.setAdapter(mAdapter);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                //TODO: do something
+            }
+        });
     }
 
 }
